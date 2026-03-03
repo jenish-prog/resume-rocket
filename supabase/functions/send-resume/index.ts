@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -25,6 +26,8 @@ serve(async (req) => {
 
     const gmailUser = Deno.env.get("GMAIL_USER");
     const gmailPassword = Deno.env.get("GMAIL_APP_PASSWORD");
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
     if (!gmailUser || !gmailPassword) {
       return new Response(
@@ -33,9 +36,20 @@ serve(async (req) => {
       );
     }
 
-    // Fetch resume PDF from Supabase Storage
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const resumeUrl = `${supabaseUrl}/storage/v1/object/public/resumes/resume.pdf`;
+    // Fetch email template from DB
+    const sb = createClient(supabaseUrl, supabaseKey);
+    const { data: template } = await sb
+      .from("email_template")
+      .select("*")
+      .limit(1)
+      .maybeSingle();
+
+    const subject = template?.subject || "Application for Internship";
+    const messageText = template?.message || "";
+    const resumeFilename = template?.resume_filename || "resume.pdf";
+
+    // Fetch resume PDF from storage
+    const resumeUrl = `${supabaseUrl}/storage/v1/object/public/resumes/${resumeFilename}`;
     const resumeResponse = await fetch(resumeUrl);
 
     if (!resumeResponse.ok) {
@@ -44,6 +58,12 @@ serve(async (req) => {
 
     const resumeBuffer = await resumeResponse.arrayBuffer();
     const resumeBase64 = base64Encode(new Uint8Array(resumeBuffer));
+
+    // Convert plain text message to HTML
+    const htmlMessage = messageText
+      .split("\n")
+      .map((line: string) => (line.trim() === "" ? "<br/>" : `<p>${line}</p>`))
+      .join("\n");
 
     const client = new SMTPClient({
       connection: {
@@ -60,27 +80,9 @@ serve(async (req) => {
     await client.send({
       from: gmailUser,
       to: email,
-      subject: "Application for Internship",
-      content: `Dear HR,
-
-I am writing to express my interest in pursuing an internship opportunity. I am eager to contribute to your team and gain practical experience in web development.
-
-Please let me know if there are any available positions or what the application process entails. I have attached my resume for your review and would welcome the opportunity to discuss how I can contribute to your company.
-
-Thank you for your time and consideration.
-
-Best regards,
-
-Jenish .S`,
-      html: `<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-<p>Dear HR,</p>
-<p>I am writing to express my interest in pursuing an internship opportunity. I am eager to contribute to your team and gain practical experience in web development.</p>
-<p>Please let me know if there are any available positions or what the application process entails. I have attached my resume for your review and would welcome the opportunity to discuss how I can contribute to your company.</p>
-<p>Thank you for your time and consideration.</p>
-<br/>
-<p>Best regards,</p>
-<p><strong>Jenish .S</strong></p>
-</div>`,
+      subject,
+      content: messageText,
+      html: `<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">${htmlMessage}</div>`,
       attachments: [
         {
           filename: "Jenish_Resume.pdf",

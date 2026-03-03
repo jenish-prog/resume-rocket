@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      email_template: {
+        Row: {
+          id: string
+          message: string
+          resume_filename: string | null
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          message?: string
+          resume_filename?: string | null
+          subject?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          message?: string
+          resume_filename?: string | null
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       sent_emails: {
         Row: {
           company: string
