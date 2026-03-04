@@ -26,9 +26,13 @@ const Settings = () => {
 
   const fetchTemplate = async () => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
       const { data, error } = await supabase
         .from("email_template")
         .select("*")
+        .eq("user_id", user.id)
         .limit(1)
         .maybeSingle();
 
@@ -62,9 +66,11 @@ const Settings = () => {
           .eq("id", templateId);
         if (error) throw error;
       } else {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Not authenticated");
         const { data, error } = await supabase
           .from("email_template")
-          .insert({ subject, message, resume_filename: resumeName })
+          .insert({ subject, message, resume_filename: resumeName, user_id: user.id })
           .select()
           .single();
         if (error) throw error;
@@ -130,11 +136,8 @@ const Settings = () => {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+    <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center bg-background p-4">
       <div className="w-full max-w-lg">
-        <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
-          <ArrowLeft className="h-4 w-4" /> Back to Sender
-        </Link>
 
         <Card className="shadow-card">
           <CardHeader className="text-center pb-2">
