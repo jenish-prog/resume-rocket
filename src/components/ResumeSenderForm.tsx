@@ -17,9 +17,17 @@ const ResumeSenderForm = () => {
   const [showConfirm, setShowConfirm] = useState(false);
   const { toast } = useToast();
 
+  const getUserId = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    return user?.id;
+  };
+
   const sendEmail = async (skipInsert: boolean) => {
     setLoading(true);
     try {
+      const userId = await getUserId();
+      if (!userId) throw new Error("Not authenticated");
+
       const { data, error } = await supabase.functions.invoke("send-resume", {
         body: { email, company },
       });
@@ -30,11 +38,11 @@ const ResumeSenderForm = () => {
       if (!skipInsert) {
         const { error: insertError } = await supabase
           .from("sent_emails")
-          .insert({ email, company });
+          .insert({ email, company, user_id: userId });
         if (insertError) throw insertError;
       }
 
-      // Auto-save to contacts if not already exists
+      // Auto-save to contacts
       const { data: existingContact } = await supabase
         .from("contacts")
         .select("id")
@@ -44,7 +52,7 @@ const ResumeSenderForm = () => {
       if (!existingContact) {
         await supabase
           .from("contacts")
-          .insert({ company_name: company, hr_email: email });
+          .insert({ company_name: company, hr_email: email, user_id: userId });
       }
 
       toast({
@@ -103,56 +111,29 @@ const ResumeSenderForm = () => {
           <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
             <Rocket className="h-7 w-7 text-primary" />
           </div>
-          <CardTitle className="text-2xl font-bold tracking-tight">
-            Resume Auto Sender
-          </CardTitle>
-          <CardDescription className="text-muted-foreground">
-            Send your resume to any company in one click
-          </CardDescription>
+          <CardTitle className="text-2xl font-bold tracking-tight">Resume Auto Sender</CardTitle>
+          <CardDescription className="text-muted-foreground">Send your resume to any company in one click</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="company" className="text-sm font-medium">
-                Company Name
-              </Label>
+              <Label htmlFor="company" className="text-sm font-medium">Company Name</Label>
               <div className="relative">
                 <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="company"
-                  placeholder="e.g. Google"
-                  value={company}
-                  onChange={(e) => setCompany(e.target.value)}
-                  className="pl-10"
-                  disabled={loading}
-                />
+                <Input id="company" placeholder="e.g. Google" value={company} onChange={(e) => setCompany(e.target.value)} className="pl-10" disabled={loading} />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium">
-                Recruiter Email
-              </Label>
+              <Label htmlFor="email" className="text-sm font-medium">Recruiter Email</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="hr@company.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10"
-                  disabled={loading}
-                />
+                <Input id="email" type="email" placeholder="hr@company.com" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10" disabled={loading} />
               </div>
             </div>
 
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="mr-2 h-4 w-4" />
-              )}
+              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
               {loading ? "Sending..." : "Send Resume"}
             </Button>
           </form>
