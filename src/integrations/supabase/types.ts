@@ -21,6 +21,7 @@ export type Database = {
           hr_email: string
           id: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           company_name: string
@@ -28,6 +29,7 @@ export type Database = {
           hr_email: string
           id?: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           company_name?: string
@@ -35,6 +37,7 @@ export type Database = {
           hr_email?: string
           id?: string
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -45,6 +48,7 @@ export type Database = {
           resume_filename: string | null
           subject: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           id?: string
@@ -52,6 +56,7 @@ export type Database = {
           resume_filename?: string | null
           subject?: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           id?: string
@@ -59,6 +64,34 @@ export type Database = {
           resume_filename?: string | null
           subject?: string
           updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -68,18 +101,21 @@ export type Database = {
           email: string
           id: string
           sent_at: string
+          user_id: string | null
         }
         Insert: {
           company: string
           email: string
           id?: string
           sent_at?: string
+          user_id?: string | null
         }
         Update: {
           company?: string
           email?: string
           id?: string
           sent_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
