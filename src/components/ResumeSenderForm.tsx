@@ -34,6 +34,19 @@ const ResumeSenderForm = () => {
         if (insertError) throw insertError;
       }
 
+      // Auto-save to contacts if not already exists
+      const { data: existingContact } = await supabase
+        .from("contacts")
+        .select("id")
+        .or(`hr_email.eq.${email},company_name.eq.${company}`)
+        .maybeSingle();
+
+      if (!existingContact) {
+        await supabase
+          .from("contacts")
+          .insert({ company_name: company, hr_email: email });
+      }
+
       toast({
         title: "✅ Resume Sent!",
         description: `Your resume was sent to ${company} (${email}).`,
