@@ -59,11 +59,12 @@ serve(async (req) => {
     const resumeBuffer = await resumeResponse.arrayBuffer();
     const resumeBase64 = base64Encode(new Uint8Array(resumeBuffer));
 
-    // Convert plain text message to HTML
+    // Preserve exact formatting: use pre-line to keep user's whitespace
     const htmlMessage = messageText
-      .split("\n")
-      .map((line: string) => (line.trim() === "" ? "<br/>" : `<p>${line}</p>`))
-      .join("\n");
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/\n/g, "<br>");
 
     const client = new SMTPClient({
       connection: {
@@ -82,7 +83,7 @@ serve(async (req) => {
       to: email,
       subject,
       content: messageText,
-      html: `<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">${htmlMessage}</div>`,
+      html: `<div style="font-family: Arial, sans-serif; line-height: 1.5; color: #333; white-space: pre-line;">${htmlMessage}</div>`,
       attachments: [
         {
           filename: "Jenish_Resume.pdf",
