@@ -136,11 +136,8 @@ const Settings = () => {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+    <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center bg-background p-4">
       <div className="w-full max-w-lg">
-        <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
-          <ArrowLeft className="h-4 w-4" /> Back to Sender
-        </Link>
 
         <Card className="shadow-card">
           <CardHeader className="text-center pb-2">
