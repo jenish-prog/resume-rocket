@@ -26,9 +26,13 @@ const Settings = () => {
 
   const fetchTemplate = async () => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
       const { data, error } = await supabase
         .from("email_template")
         .select("*")
+        .eq("user_id", user.id)
         .limit(1)
         .maybeSingle();
 
@@ -62,9 +66,11 @@ const Settings = () => {
           .eq("id", templateId);
         if (error) throw error;
       } else {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Not authenticated");
         const { data, error } = await supabase
           .from("email_template")
-          .insert({ subject, message, resume_filename: resumeName })
+          .insert({ subject, message, resume_filename: resumeName, user_id: user.id })
           .select()
           .single();
         if (error) throw error;
