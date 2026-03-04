@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      contacts: {
+        Row: {
+          company_name: string
+          created_at: string
+          hr_email: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          company_name: string
+          created_at?: string
+          hr_email: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          company_name?: string
+          created_at?: string
+          hr_email?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       email_template: {
         Row: {
           id: string
