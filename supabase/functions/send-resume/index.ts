@@ -36,13 +36,22 @@ serve(async (req) => {
       );
     }
 
-    // Fetch email template from DB
-    const sb = createClient(supabaseUrl, supabaseKey);
-    const { data: template } = await sb
+    // Use the user's JWT to respect RLS and fetch their template
+    const authHeader = req.headers.get("Authorization");
+    const sb = createClient(supabaseUrl, supabaseKey, {
+      global: { headers: authHeader ? { Authorization: authHeader } : {} },
+    });
+
+    const { data: template, error: templateError } = await sb
       .from("email_template")
       .select("*")
       .limit(1)
       .maybeSingle();
+
+    console.log("Template fetched:", JSON.stringify(template));
+    if (templateError) {
+      console.error("Template fetch error:", templateError);
+    }
 
     const subject = template?.subject || "Application for Internship";
     const messageText = template?.message || "";
@@ -59,7 +68,7 @@ serve(async (req) => {
     const resumeBuffer = await resumeResponse.arrayBuffer();
     const resumeBase64 = base64Encode(new Uint8Array(resumeBuffer));
 
-    // Preserve exact formatting: use pre-line to keep user's whitespace
+    // Preserve exact formatting
     const htmlMessage = messageText
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
